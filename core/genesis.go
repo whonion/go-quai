@@ -22,9 +22,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"math/big"
 	"os"
+	"io"
+	"math/big"
 
 	"github.com/dominant-strategies/go-quai/common"
 	"github.com/dominant-strategies/go-quai/common/hexutil"
@@ -448,7 +448,7 @@ func ReadGenesisAlloc(filename string) map[string]GenesisAccount {
 	}
 	defer jsonFile.Close()
 	// Read the file contents
-	byteValue, err := ioutil.ReadAll(jsonFile)
+	byteValue, err := io.ReadAll(jsonFile)
 	if err != nil {
 		log.Error(err.Error())
 		return nil

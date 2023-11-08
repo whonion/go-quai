@@ -23,7 +23,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math/big"
 	"net/http"
 	"runtime"
@@ -649,7 +649,7 @@ func (s *Service) login2(url string) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 
 	var authResponse AuthResponse
 	err = json.Unmarshal(body, &authResponse)

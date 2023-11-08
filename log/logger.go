@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-
 	"github.com/natefinch/lumberjack"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/urfave/cli.v1"
