@@ -28,6 +28,7 @@ import (
 const (
 	headerCacheLimit      = 512
 	numberCacheLimit      = 2048
+	c_subRollupCacheSize  = 50
 	primeHorizonThreshold = 20
 )
 
@@ -62,6 +63,7 @@ type HeaderChain struct {
 	pendingEtxsRollup *lru.Cache
 	pendingEtxs       *lru.Cache
 	blooms            *lru.Cache
+	subRollupCache    *lru.Cache
 
 	wg            sync.WaitGroup // chain processing wait group for shutting down
 	running       int32          // 0 if chain is running, 1 when stopped
@@ -77,6 +79,7 @@ type HeaderChain struct {
 func NewHeaderChain(db ethdb.Database, engine consensus.Engine, pEtxsRollupFetcher getPendingEtxsRollup, pEtxsFetcher getPendingEtxs, chainConfig *params.ChainConfig, cacheConfig *CacheConfig, txLookupLimit *uint64, vmConfig vm.Config, slicesRunning []common.Location) (*HeaderChain, error) {
 	headerCache, _ := lru.New(headerCacheLimit)
 	numberCache, _ := lru.New(numberCacheLimit)
+	nodeCtx := common.NodeLocation.Context()
 
 	hc := &HeaderChain{
 		config:          chainConfig,
@@ -92,11 +95,17 @@ func NewHeaderChain(db ethdb.Database, engine consensus.Engine, pEtxsRollupFetch
 	pendingEtxsRollup, _ := lru.New(c_maxPendingEtxsRollup)
 	hc.pendingEtxsRollup = pendingEtxsRollup
 
-	pendingEtxs, _ := lru.New(c_maxPendingEtxBatches)
-	hc.pendingEtxs = pendingEtxs
+	if nodeCtx == common.PRIME_CTX {
+		hc.pendingEtxs, _ = lru.New(c_maxPendingEtxBatchesPrime)
+	} else {
+		hc.pendingEtxs, _ = lru.New(c_maxPendingEtxBatchesRegion)
+	}
 
 	blooms, _ := lru.New(c_maxBloomFilters)
 	hc.blooms = blooms
+
+	subRollupCache, _ := lru.New(c_subRollupCacheSize)
+	hc.subRollupCache = subRollupCache
 
 	hc.genesisHeader = hc.GetHeaderByNumber(0)
 	if hc.genesisHeader.Hash() != chainConfig.GenesisHash {
